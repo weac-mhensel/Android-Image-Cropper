@@ -76,33 +76,67 @@ final class BitmapUtils {
       }
     } catch (Exception ignored) {
     }
-    return ei != null ? rotateBitmapByExif(bitmap, ei) : new RotateBitmapResult(bitmap, 0);
+    return ei != null ? rotateBitmapByExif(bitmap, ei) :
+            new RotateBitmapResult(bitmap, 0, false, false);
   }
 
   /**
    * Rotate the given image by given Exif value.<br>
    * If no rotation is required the image will not be rotated.<br>
    * New bitmap is created and the old one is recycled.
+   *
+   * EDIT: assumes rotate before flip
    */
   static RotateBitmapResult rotateBitmapByExif(Bitmap bitmap, ExifInterface exif) {
     int degrees;
     int orientation =
         exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
+    boolean flipH;
+    boolean flipV;
+
     switch (orientation) {
-      case ExifInterface.ORIENTATION_ROTATE_90:
-        degrees = 90;
+      case ExifInterface.ORIENTATION_FLIP_HORIZONTAL:
+        degrees = 0;
+        flipH = true;
+        flipV = false;
         break;
       case ExifInterface.ORIENTATION_ROTATE_180:
         degrees = 180;
+        flipH = false;
+        flipV = false;
+        break;
+      case ExifInterface.ORIENTATION_FLIP_VERTICAL:
+        degrees = 0;
+        flipH = false;
+        flipV = true;
+        break;
+      case ExifInterface.ORIENTATION_TRANSPOSE:
+        degrees = 90;
+        flipH = true;
+        flipV = false;
+        break;
+      case ExifInterface.ORIENTATION_ROTATE_90:
+        degrees = 90;
+        flipH = false;
+        flipV = false;
+        break;
+      case ExifInterface.ORIENTATION_TRANSVERSE:
+        degrees = 90;
+        flipH = false;
+        flipV = true;
         break;
       case ExifInterface.ORIENTATION_ROTATE_270:
         degrees = 270;
+        flipH = false;
+        flipV = false;
         break;
       default:
         degrees = 0;
+        flipH = false;
+        flipV = false;
         break;
     }
-    return new RotateBitmapResult(bitmap, degrees);
+    return new RotateBitmapResult(bitmap, degrees, flipH, flipV);
   }
 
   /** Decode bitmap from stream using sampling to get bitmap with the requested limit. */
@@ -868,9 +902,17 @@ final class BitmapUtils {
     /** The degrees the image was rotated */
     final int degrees;
 
-    RotateBitmapResult(Bitmap bitmap, int degrees) {
+    /** is this image flipped horzontally */
+    final boolean flippedHorizontally;
+
+    /** is this image flipped vertically*/
+    final boolean flippedVertically;
+
+    RotateBitmapResult(Bitmap bitmap, int degrees, boolean flippedHorizontally, boolean flippedVertically) {
       this.bitmap = bitmap;
       this.degrees = degrees;
+      this.flippedHorizontally = flippedHorizontally;
+      this.flippedVertically = flippedVertically;
     }
   }
   // endregion

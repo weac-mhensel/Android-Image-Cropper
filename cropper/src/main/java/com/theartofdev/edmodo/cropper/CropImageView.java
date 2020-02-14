@@ -75,8 +75,14 @@ public class CropImageView extends FrameLayout {
   /** How much the image is rotated from original clockwise */
   private int mDegreesRotated;
 
+  /** The image horizontal flip value used during loading of the image so we can reset to it */
+  private boolean mInitialFlipHorizontally;
+
   /** if the image flipped horizontally */
   private boolean mFlipHorizontally;
+
+  /** The image rotation value used during loading of the image so we can reset to it */
+  private boolean mInitialFlipVertically;
 
   /** if the image flipped vertically */
   private boolean mFlipVertically;
@@ -722,8 +728,8 @@ public class CropImageView extends FrameLayout {
     mZoomOffsetX = 0;
     mZoomOffsetY = 0;
     mDegreesRotated = mInitialDegreesRotated;
-    mFlipHorizontally = false;
-    mFlipVertically = false;
+    mFlipHorizontally = mInitialFlipHorizontally;
+    mFlipVertically = mInitialFlipVertically;
     applyImageMatrix(getWidth(), getHeight(), false, false);
     mCropOverlayView.resetCropWindowRect();
   }
@@ -961,7 +967,7 @@ public class CropImageView extends FrameLayout {
    */
   public void setImageBitmap(Bitmap bitmap) {
     mCropOverlayView.setInitialCropWindowRect(null);
-    setBitmap(bitmap, 0, null, 1, 0);
+    setBitmap(bitmap, 0, null, 1, 0, false, false);
   }
 
   /**
@@ -981,11 +987,13 @@ public class CropImageView extends FrameLayout {
       setBitmap = result.bitmap;
       degreesRotated = result.degrees;
       mInitialDegreesRotated = result.degrees;
+      mInitialFlipHorizontally = result.flippedHorizontally;
+      mInitialFlipVertically = result.flippedHorizontally;
     } else {
       setBitmap = bitmap;
     }
     mCropOverlayView.setInitialCropWindowRect(null);
-    setBitmap(setBitmap, 0, null, 1, degreesRotated);
+    setBitmap(setBitmap, 0, null, 1, degreesRotated, mInitialFlipHorizontally, mInitialFlipVertically);
   }
 
   /**
@@ -997,7 +1005,7 @@ public class CropImageView extends FrameLayout {
     if (resId != 0) {
       mCropOverlayView.setInitialCropWindowRect(null);
       Bitmap bitmap = BitmapFactory.decodeResource(getResources(), resId);
-      setBitmap(bitmap, resId, null, 1, 0);
+      setBitmap(bitmap, resId, null, 1, 0, false, false);
     }
   }
 
@@ -1143,7 +1151,9 @@ public class CropImageView extends FrameLayout {
 
     if (result.error == null) {
       mInitialDegreesRotated = result.degreesRotated;
-      setBitmap(result.bitmap, 0, result.uri, result.loadSampleSize, result.degreesRotated);
+      mInitialFlipHorizontally = result.flippedHorizontally;
+      mInitialFlipVertically = result.flippedVertically;
+      setBitmap(result.bitmap, 0, result.uri, result.loadSampleSize, result.degreesRotated, result.flippedHorizontally, result.flippedVertically);
     }
 
     OnSetImageUriCompleteListener listener = mOnSetImageUriCompleteListener;
@@ -1187,7 +1197,7 @@ public class CropImageView extends FrameLayout {
    * manipulated.
    */
   private void setBitmap(
-      Bitmap bitmap, int imageResource, Uri imageUri, int loadSampleSize, int degreesRotated) {
+      Bitmap bitmap, int imageResource, Uri imageUri, int loadSampleSize, int degreesRotated, boolean flippedHorizontally, boolean flippedVertically) {
     if (mBitmap == null || !mBitmap.equals(bitmap)) {
 
       mImageView.clearAnimation();
@@ -1201,6 +1211,8 @@ public class CropImageView extends FrameLayout {
       mImageResource = imageResource;
       mLoadedSampleSize = loadSampleSize;
       mDegreesRotated = degreesRotated;
+      mFlipHorizontally = flippedHorizontally;
+      mFlipVertically = flippedVertically;
 
       applyImageMatrix(getWidth(), getHeight(), true, false);
 
@@ -1396,7 +1408,7 @@ public class CropImageView extends FrameLayout {
                     : null;
             BitmapUtils.mStateBitmap = null;
             if (stateBitmap != null && !stateBitmap.isRecycled()) {
-              setBitmap(stateBitmap, 0, uri, bundle.getInt("LOADED_SAMPLE_SIZE"), 0);
+              setBitmap(stateBitmap, 0, uri, bundle.getInt("LOADED_SAMPLE_SIZE"), 0, false, false);
             }
           }
           if (mLoadedImageUri == null) {

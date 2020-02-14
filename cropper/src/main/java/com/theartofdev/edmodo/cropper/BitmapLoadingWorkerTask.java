@@ -78,7 +78,9 @@ final class BitmapLoadingWorkerTask extends AsyncTask<Void, Void, BitmapLoadingW
               BitmapUtils.rotateBitmapByExif(decodeResult.bitmap, mContext, mUri);
 
           return new Result(
-              mUri, rotateResult.bitmap, decodeResult.sampleSize, rotateResult.degrees);
+                  mUri, rotateResult.bitmap, decodeResult.sampleSize, rotateResult.degrees,
+                  rotateResult.flippedHorizontally, rotateResult.flippedVertically
+          );
         }
       }
       return null;
@@ -127,14 +129,25 @@ final class BitmapLoadingWorkerTask extends AsyncTask<Void, Void, BitmapLoadingW
     /** The degrees the image was rotated */
     public final int degreesRotated;
 
+    /** is this image flipped horzontally */
+    final boolean flippedHorizontally;
+
+    /** is this image flipped vertically */
+    final boolean flippedVertically;
+
     /** The error that occurred during async bitmap loading. */
     public final Exception error;
 
-    Result(Uri uri, Bitmap bitmap, int loadSampleSize, int degreesRotated) {
+    Result(
+            Uri uri, Bitmap bitmap, int loadSampleSize,
+            int degreesRotated, boolean flippedHorizontally, boolean flippedVertically
+    ) {
       this.uri = uri;
       this.bitmap = bitmap;
       this.loadSampleSize = loadSampleSize;
       this.degreesRotated = degreesRotated;
+      this.flippedHorizontally = flippedHorizontally;
+      this.flippedVertically = flippedVertically;
       this.error = null;
     }
 
@@ -143,6 +156,8 @@ final class BitmapLoadingWorkerTask extends AsyncTask<Void, Void, BitmapLoadingW
       this.bitmap = null;
       this.loadSampleSize = 0;
       this.degreesRotated = 0;
+      this.flippedHorizontally = false;
+      this.flippedVertically = false;
       this.error = error;
     }
   }
